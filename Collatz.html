@@ -5,11 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Collatz Conjecture Calculator</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <style>
     body {
         font-family: Arial, sans-serif;
         margin: 0;
         padding: 0;
+        transition: background-color 0.3s ease, color 0.3s ease;
     }
     .container {
         max-width: 800px;
@@ -18,6 +20,7 @@
         border: 1px solid #ccc;
         border-radius: 5px;
         background-color: #f9f9f9;
+        transition: background-color 0.3s ease, color 0.3s ease;
     }
     button {
         padding: 10px 20px;
@@ -27,6 +30,7 @@
         border-radius: 5px;
         cursor: pointer;
         margin-right: 10px;
+        transition: background-color 0.3s ease;
     }
     button:hover {
         background-color: #0056b3;
@@ -37,6 +41,35 @@
     canvas {
         margin-top: 20px;
         height: 300px;
+    }
+    .dark-mode {
+        background-color: #121212;
+        color: #ffffff;
+    }
+    .dark-mode .container {
+        background-color: #1e1e1e;
+        border-color: #333;
+    }
+    .dark-mode button {
+        background-color: #333;
+        color: #ffffff;
+    }
+    .dark-mode button:hover {
+        background-color: #555;
+    }
+    .dark-mode-toggle {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 24px;
+        color: #000000;
+        transition: color 0.3s ease;
+    }
+    .dark-mode .dark-mode-toggle {
+        color: #ffffff;
     }
 </style>
 </head>
@@ -50,9 +83,15 @@
     <canvas id="myChart" width="400" height="300" tabindex="1"></canvas>
 </div>
 
+<!-- Dark mode toggle button -->
+<button class="dark-mode-toggle" onclick="toggleDarkMode()">
+    <i id="darkModeIcon" class="fas fa-moon"></i>
+</button>
+
 <script>
-    var myChart; // Declare myChart outside of the function to make it accessible globally
-    var isLogarithmicScale = false; // Variable to track the scale type, linear by default
+    var myChart;
+    var isLogarithmicScale = false;
+    var isDarkMode = false;
 
     function calculateCollatz() {
         var number = parseInt(document.getElementById("inputNumber").value);
@@ -72,36 +111,45 @@
             }
         }
         
-        result.push(1); // Include the final number 1
+        result.push(1);
         
         document.getElementById("result").innerHTML = "Collatz sequence: " + result.join(", ");
         
-        // Clear previous chart
         if (myChart) {
             myChart.destroy();
         }
         
-        // Plotting the graph
         var ctx = document.getElementById('myChart').getContext('2d');
         myChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: Array.from(Array(result.length).keys()), // Labels are indices of the array
+                labels: Array.from(Array(result.length).keys()),
                 datasets: [{
                     label: 'Collatz Sequence',
                     data: result,
-                    borderColor: 'rgb(50, 70, 225)',
-                    backgroundColor: 'rgba(50, 70, 225, 0.2)',
+                    borderColor: isDarkMode ? 'white' : 'rgb(50, 70, 225)', // Line color changes based on dark mode
+                    backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(50, 70, 225, 0.2)',
                     borderWidth: 1.5,
-                    pointRadius: 5, // Set a constant value for point size
-                    hitRadius: 10 // Set a constant value for hit radius
+                    pointRadius: 5,
+                    hitRadius: 10
                 }]
             },
             options: {
                 scales: {
                     y: {
-                        type: 'linear', // Initially set the y-axis scale to linear
-                        beginAtZero: true // Start the scale from zero
+                        type: 'linear',
+                        beginAtZero: true,
+                        grid: {
+                            color: isDarkMode ? '#555' : '#ddd', // Grid line color
+                            borderColor: isDarkMode ? '#444' : '#ccc', // Border color for the y-axis
+                            lineWidth: isDarkMode ? 0.5 : 1 // Thinner lines in dark mode
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: isDarkMode ? '#555' : '#ddd', // Grid line color
+                            lineWidth: isDarkMode ? 0.5 : 1 // Thinner lines in dark mode
+                        }
                     }
                 },
                 plugins: {
@@ -114,16 +162,40 @@
     }
 
     function toggleScale() {
-        isLogarithmicScale = !isLogarithmicScale; // Toggle the scale type
+        isLogarithmicScale = !isLogarithmicScale;
         var scaleType = isLogarithmicScale ? 'logarithmic' : 'linear';
         var scaleToggleBtn = document.getElementById("scaleToggleBtn");
 
-        // Update the button text
         scaleToggleBtn.textContent = isLogarithmicScale ? "Toggle Linear" : "Toggle Logarithmic";
 
-        // Update the chart scale
         myChart.options.scales.y.type = scaleType;
         myChart.update();
+    }
+
+    function toggleDarkMode() {
+        isDarkMode = !isDarkMode;
+        var body = document.body;
+        body.classList.toggle("dark-mode");
+
+        var darkModeIcon = document.getElementById("darkModeIcon");
+        if (isDarkMode) {
+            darkModeIcon.classList.remove("fa-moon");
+            darkModeIcon.classList.add("fa-sun");
+        } else {
+            darkModeIcon.classList.remove("fa-sun");
+            darkModeIcon.classList.add("fa-moon");
+        }
+        
+        if (myChart) {
+            // Update chart colors
+            myChart.data.datasets[0].borderColor = isDarkMode ? 'white' : 'rgb(50, 70, 225)';
+            myChart.data.datasets[0].backgroundColor = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(50, 70, 225, 0.2)';
+            myChart.options.scales.y.grid.color = isDarkMode ? '#555' : '#ddd';
+            myChart.options.scales.x.grid.color = isDarkMode ? '#555' : '#ddd';
+            myChart.options.scales.y.grid.lineWidth = isDarkMode ? 0.5 : 1;
+            myChart.options.scales.x.grid.lineWidth = isDarkMode ? 0.5 : 1;
+            myChart.update();
+        }
     }
 </script>
 </body>
