@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collatz Conjecture Calculator</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+    }
+    button {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-right: 10px;
+    }
+    button:hover {
+        background-color: #0056b3;
+    }
+    #result {
+        margin-top: 20px;
+    }
+    canvas {
+        margin-top: 20px;
+        height: 300px;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h2>Collatz Conjecture Calculator</h2>
+    <input type="number" id="inputNumber" placeholder="Enter a number">
+    <button onclick="calculateCollatz()">Calculate</button>
+    <button id="scaleToggleBtn" onclick="toggleScale()">Toggle Logarithmic</button>
+    <div id="result"></div>
+    <canvas id="myChart" width="400" height="300" tabindex="1"></canvas>
+</div>
+
+<script>
+    var myChart; // Declare myChart outside of the function to make it accessible globally
+    var isLogarithmicScale = false; // Variable to track the scale type, linear by default
+
+    function calculateCollatz() {
+        var number = parseInt(document.getElementById("inputNumber").value);
+        var result = [];
+        
+        if (isNaN(number) || number <= 0) {
+            document.getElementById("result").innerHTML = "Please enter a positive integer.";
+            return;
+        }
+        
+        while (number !== 1) {
+            result.push(number);
+            if (number % 2 === 0) {
+                number /= 2;
+            } else {
+                number = 3 * number + 1;
+            }
+        }
+        
+        result.push(1); // Include the final number 1
+        
+        document.getElementById("result").innerHTML = "Collatz sequence: " + result.join(", ");
+        
+        // Clear previous chart
+        if (myChart) {
+            myChart.destroy();
+        }
+        
+        // Plotting the graph
+        var ctx = document.getElementById('myChart').getContext('2d');
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from(Array(result.length).keys()), // Labels are indices of the array
+                datasets: [{
+                    label: 'Collatz Sequence',
+                    data: result,
+                    borderColor: 'rgb(50, 70, 225)',
+                    backgroundColor: 'rgba(50, 70, 225, 0.2)',
+                    borderWidth: 1.5,
+                    pointRadius: 5, // Set a constant value for point size
+                    hitRadius: 10 // Set a constant value for hit radius
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        type: 'linear', // Initially set the y-axis scale to linear
+                        beginAtZero: true // Start the scale from zero
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        enabled: true
+                    }
+                }
+            }
+        });
+    }
+
+    function toggleScale() {
+        isLogarithmicScale = !isLogarithmicScale; // Toggle the scale type
+        var scaleType = isLogarithmicScale ? 'logarithmic' : 'linear';
+        var scaleToggleBtn = document.getElementById("scaleToggleBtn");
+
+        // Update the button text
+        scaleToggleBtn.textContent = isLogarithmicScale ? "Toggle Linear" : "Toggle Logarithmic";
+
+        // Update the chart scale
+        myChart.options.scales.y.type = scaleType;
+        myChart.update();
+    }
+</script>
+</body>
+</html>
